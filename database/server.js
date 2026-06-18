@@ -1,24 +1,48 @@
 const express = require("express");
-const mongoose = require("mongoose");
+const { default: mongoose } = require("mongoose");
+const UserModel = require("./models/user.model");
 
 const app = express();
 
-const db = async () => {
+app.use(express.json());
+
+const connectDb = async () => {
   await mongoose.connect(
-    "mongodb+srv://fs-35:qwerty12345@cluster0.egyi8xw.mongodb.net/"
+    "mongodb://0.0.0.0/test"
   );
-
   console.log("mongodb connected");
-};
+};  
 
-db();
+connectDb();
 
 app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "i m running",
+  res.send("ok");
+});
+
+app.post("/create", async (req, res) => {
+  const { name, email, password, mobile, gender } = req.body;
+
+  if (!name || !email || !password || !mobile || !gender)
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required",
+    });
+
+  const newUser = await UserModel.create({
+    name,
+    email,
+    password,
+    mobile,
+    gender,
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "User created",
+    data: newUser,
   });
 });
 
 app.listen(3000, () => {
-  console.log("server running port 30000");
+  console.log("server run hogya hai 3000 pe");
 });
