@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import EmployeeCard from "./components/EmployeeCard";
 
@@ -11,8 +11,9 @@ const App = () => {
     setEmployees(res.data.data);
     console.log("all employees", res);
   };
-
-  getAllEmployee();
+  useEffect(() => {
+    getAllEmployee();
+  }, []);
 
   const handleChange = (e) => {
     let { name, value } = e.target;
