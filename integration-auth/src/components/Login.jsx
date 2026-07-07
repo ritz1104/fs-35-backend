@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { api } from "../config/axiosInstance";
 import { useDispatch } from "react-redux";
 import { addUser } from "../features/authSlice";
+import axios from "axios";
 
 const Login = ({ setToggle }) => {
   const dispatch = useDispatch();

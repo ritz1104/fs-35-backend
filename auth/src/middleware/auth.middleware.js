@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user.model");
 
 const authMiddleware = async (req, res, next) => {
+  // try {
   const token = req.cookies.secret;
 
   if (!token)
@@ -23,6 +24,12 @@ const authMiddleware = async (req, res, next) => {
   req.user = user;
 
   next();
+  // } catch (error) {
+  //   return res.status(401).json({
+  //     success: false,
+  //     message: "Token expired",
+  //   });
+  // }
 };
 
 module.exports = authMiddleware;
