@@ -1,15 +1,9 @@
 const express = require("express");
+const getImageController = require("../controllers/post.controller");
 const upload = require("../config/multer");
 
 const router = express.Router();
 
-router.post("/", upload.single("image"), (req, res) => {
-  console.log(req.file);
-
-  return res.status(200).json({
-    success: true,
-    message: "image get it",
-  });
-});
+router.post("/", upload.single("image"), getImageController);
 
 module.exports = router;
