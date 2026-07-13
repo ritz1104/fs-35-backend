@@ -2,17 +2,22 @@ const sendFile = require("../config/imagekit");
 
 const getImageController = async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files) {
       return res.status(404).json({
         success: false,
         message: "File not found",
       });
     }
 
-    let file = req.file;
+    let files = req.files;
 
-    let uploadedFile = await sendFile(file.buffer, file.originalname);
-    console.log(uploadedFile);
+    let uploadedImg = await Promise.all(
+      files.map(async (elem) => {
+        return await sendFile(elem.buffer, elem.originalname);
+      })
+    );
+
+    console.log(uploadedImg);
 
     return res.status(200).json({
       success: true,
