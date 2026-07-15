@@ -94,5 +94,9 @@ userSchema.pre("save", function () {
   this.password = bcrypt.hashSync(this.password, 10);
 });
 
+userSchema.methods.comparePass = function (password) {
+  return bcrypt.compareSync(password, this.password);
+};
+
 const UserModel = mongoose.model("users", userSchema);
 export default UserModel;
