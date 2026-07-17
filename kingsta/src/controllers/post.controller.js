@@ -1,5 +1,5 @@
-import PostModel from "../models/post.model";
-import { sendFiles } from "../services/storage.service";
+import PostModel from "../models/post.model.js";
+import { sendFiles } from "../services/storage.service.js";
 
 export const createPostController = async (req, res) => {
   try {

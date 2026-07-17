@@ -53,57 +53,75 @@ export const registerController = async (req, res) => {
     });
   }
 };
-
 export const loginController = async (req, res) => {
   try {
-    let { email, password } = req.body;
+    const { email, password } = req.body;
 
+    // Check required fields
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "Email and password are required",
       });
     }
 
-    let isExisted = await UserModel.findOne({ email }).select("-password");
+    // Find user
+    const user = await UserModel.findOne({ email });
 
-    if (!isExisted)
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "user not found",
+        message: "User not found",
       });
+    }
 
-    let checkPass = isExisted.comparePass(password);
+    // Compare password
+    const isPasswordCorrect = user.comparePass(password);
 
-    if (!checkPass)
+    if (!isPasswordCorrect) {
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
+    }
 
-    const accessToken = generateToken(isExisted._id, "15min");
-    const refreshToken = generateToken(isExisted._id, "1d");
+    // Generate Tokens
+    const accessToken = generateToken(user._id, "15m");
+    const refreshToken = generateToken(user._id, "1d");
 
+    // (Optional but Recommended)
+    // user.refreshToken = refreshToken;
+    // await user.save();
+
+    // Set Cookies
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       maxAge: 15 * 60 * 1000,
+      secure: false, // true in production
+      sameSite: "strict",
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
+      secure: false, // true in production
+      sameSite: "strict",
     });
 
-    return res.status(201).json({
+    // Remove password before sending response
+    const userData = user.toObject();
+    delete userData.password;
+
+    return res.status(200).json({
       success: true,
-      message: "User loggedIn",
-      data: isExisted,
+      message: "Login successful",
+      data: userData,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "internal server error",
-      error,
+      message: "Internal Server Error",
+      error: error.message,
     });
   }
 };
