@@ -1,3 +1,4 @@
+import { response } from "express";
 import UserModel from "../models/user.model.js";
 
 export const getMe = async(req,res)=>{
@@ -73,4 +74,68 @@ export const updateProfile= async (req,res)=>{
             error:error.message
          })
     }
+}
+
+export const searchUser = async (req,res)=>{
+  const {query} = req.query
+  //  query=rit
+  if(!query) return res.status(400).json({
+    success:false,
+    message:"search query required"
+  })
+  const user = await UserModel.find({
+    $or:[
+        {username:{ "$regex":query,"$options":"i"}},
+        {fullName:{"$regex":query,"$options":"i"}}
+    ]
+  }).select("username fullName profile_pic")
+
+  if(user.length==0) return res.status(404).json({
+    success:false,
+    message:"user not found"
+  })
+
+  return res.status(200).json({
+    success:true,
+    message:"user fetched successfully",
+    user
+  })
+}
+
+
+export const followUser  = async(req,res)=>{
+  const targetUserId = req.params.id
+
+  if(targetUserId === req.user.id) return res.status(400).json({
+    success:false,
+    message:"you cannot follow yourself"
+  })
+
+  const loggedInUser = await UserModel.findById(req.user.id)
+  const targetUser = await UserModel.findById(targetUserId)
+
+  if(!targetUser) return res.status(404).json({
+    success:false,
+    message:"user not found"
+  })
+
+  const alreadyExist = loggedInUser.followings.includes(targetUserId)
+
+  if(alreadyExist) return res.status(400).json({
+    success:false,
+    message:"you alredy follow this user"
+  })
+
+  loggedInUser.followings.push(targetUserId)
+  targetUser.followers.push(req.user.id)
+
+  loggedInUser.save()
+  targetUser.save()
+
+  return res.status(200).json({
+    success:true,
+    message:"user followed successfully",
+    loggedInUser,
+    targetUser
+  })
 }
