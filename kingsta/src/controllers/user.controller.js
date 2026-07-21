@@ -78,6 +78,8 @@ export const updateProfile= async (req,res)=>{
 
 export const searchUser = async (req,res)=>{
   const {query} = req.query
+
+  console.log(query)
   //  query=rit
   if(!query) return res.status(400).json({
     success:false,
@@ -103,10 +105,12 @@ export const searchUser = async (req,res)=>{
 }
 
 
-export const followUser  = async(req,res)=>{
+export const followUser = async (req,res)=>{
+
   const targetUserId = req.params.id
 
   if(targetUserId === req.user.id) return res.status(400).json({
+
     success:false,
     message:"you cannot follow yourself"
   })
@@ -119,23 +123,131 @@ export const followUser  = async(req,res)=>{
     message:"user not found"
   })
 
+
   const alreadyExist = loggedInUser.followings.includes(targetUserId)
 
   if(alreadyExist) return res.status(400).json({
-    success:false,
-    message:"you alredy follow this user"
+    success :false,
+    message:"you  alredy follow this user"
   })
 
   loggedInUser.followings.push(targetUserId)
   targetUser.followers.push(req.user.id)
+
+  await loggedInUser.save()
+   await targetUser.save()
+
+  return res.status(200).json({
+    success:true,
+    message:"user followed successfully",
+    targetUser,
+    loggedInUser
+
+  })
+}
+
+
+export const unfollowUser = async (req,res)=>{
+
+  const targetUserId = req.params.id
+
+  if(req.user.id === targetUserId) return res.status(400).json({
+    success:false,
+    message:"you cannot unfollow youself"
+  })
+
+  const loggedInUser = await UserModel.findById(req.user.id)
+  const targetUser = await UserModel.findById(targetUserId)
+
+  if(!targetUser) return res.status(404).json({
+    success:false,
+    message:"user not found"
+  })
+
+  const alreadyExist = loggedInUser.followings.includes(targetUserId)
+
+  if(!alreadyExist) return res.status(400).json({
+    success:false,
+    message:"you did not follow this user"
+  })
+
+  loggedInUser.followings.pull(targetUserId)
+  targetUser.followers.pull(req.user.id)
 
   loggedInUser.save()
   targetUser.save()
 
   return res.status(200).json({
     success:true,
-    message:"user followed successfully",
+    message:"user unfollowed successfully",
     loggedInUser,
     targetUser
   })
+
+}
+
+
+
+
+
+export const getFollowers = async (req,res)=>{
+  const targetUserId = req.params.id
+
+  if(!targetUserId) return res.status(400).json({
+    success:false,
+    message:"id is required"
+  })
+
+  const user = await UserModel.findById(targetUserId).populate("followers","username fullName profile_pic")
+
+  if(!user) return res.status(404).json({
+    success:false,
+    message:"user not found"
+  })
+
+  return res.status(200).json({
+    success:true,
+    message:"followers fetched successfully",
+    followers : user.followers,
+    count:user.followers.length
+  })
+}
+
+
+export const changePassword = async(req,res)=>{
+  const {password,newPassword} = req.body
+
+  if(!password || !newPassword) return res.status(400).json({
+    success:false,
+    message:"both fields are required"
+  })
+
+  if(password === newPassword) return res.status(409).json({
+    success:false,
+    message:"enter different password"
+  })
+
+  const user = await UserModel.findById(req.user.id)
+
+  if(!user) return res.status(404).json({
+    success:false,
+    message:"user details not found"
+  })
+
+  const isPassworMatched = user.comparePass(password)
+
+  if(!isPassworMatched) return res.status(400).json({
+    success:false,
+    message:"incorrect password"
+  })
+
+  user.password = newPassword
+
+  await user.save()
+
+  return res.status(200).json({
+    success:true,
+    message:"password changed successfully"
+  })
+
 }
