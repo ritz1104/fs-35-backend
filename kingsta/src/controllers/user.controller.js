@@ -1,5 +1,6 @@
 import { response } from "express";
 import UserModel from "../models/user.model.js";
+import { sendFiles } from "../services/storage.service.js";
 
 export const getMe = async(req,res)=>{
    try {
@@ -208,7 +209,7 @@ export const getFollowers = async (req,res)=>{
   return res.status(200).json({
     success:true,
     message:"followers fetched successfully",
-    followers : user.followers,
+    followers:user.followers,
     count:user.followers.length
   })
 }
@@ -250,4 +251,35 @@ export const changePassword = async(req,res)=>{
     message:"password changed successfully"
   })
 
+}
+
+
+export const updateProfilePicture = async (req,res)=>{
+  const file = req.file
+  console.log(file)
+  if(!file) return res.status(400).json({
+    success:false,
+    message:"file is required"
+  })
+
+  const user = await UserModel.findById(req.user.id)
+
+  if(!user) return res.status(404).json({
+    success:false,
+    message:"user not found"
+  })
+
+ 
+const uploadFile = await sendFiles(file.buffer,file.originalname)
+
+user.profile_pic = uploadFile.url
+
+await user.save()
+
+return res.status(200).json({
+  success:true,
+  message:"profile pic updated successfully",
+  user
+
+})
 }
