@@ -1,4 +1,5 @@
 import PostModel from "../models/post.model.js";
+import UserModel from "../models/user.model.js";
 import { sendFiles } from "../services/storage.service.js";
 
 export const createPostController = async (req, res) => {
@@ -6,6 +7,8 @@ export const createPostController = async (req, res) => {
     let { caption, location } = req.body;
 
     let files = req.files;
+
+    const user = await UserModel.findById(req.user.id)
 
     if (!files)
       return res.status(400).json({
@@ -22,9 +25,13 @@ export const createPostController = async (req, res) => {
     let newPost = await PostModel.create({
       caption,
       location,
+      user:req.user.id,
       media_urls: uploadedImages.map((elem) => elem.url),
     });
 
+    user.posts.push(newPost._id)
+
+    await user.save()
     return res.status(201).json({
       success: true,
       message: "Post created successfully",
