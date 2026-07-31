@@ -6,6 +6,8 @@ import authRoutes from "./routes/auth.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import userRouter from './routes/user.routes.js'
 import commentRouter from "./routes/comment.routes.js"
+
+import storyRouter from './routes/stories.routes.js'
 const app = express();
 
 app.use(cookieParser());
@@ -17,5 +19,5 @@ app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/users",userRouter)
 app.use("/api/comments",commentRouter)
-
+app.use("/api/stories",storyRouter)
 export default app;
