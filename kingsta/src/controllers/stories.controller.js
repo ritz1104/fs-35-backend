@@ -65,5 +65,62 @@ export const getStories = async (req,res)=>{
 }
 
 export const viewStories = async(req,res)=>{
-    
+        const storyId = req.params.id
+        const story = await storyModel.findById(storyId)
+
+        if(!story) return res.status(404).json({
+            success:false,
+            message:"story not found"
+        })
+
+        if(String(story.user)===req.user.id) return res.status(200).json({
+            success:true,
+            message:"you are watching your own story",
+            story
+        })
+
+
+        const alreadyExist = story.viewers.includes(req.user.id)
+
+        if(alreadyExist) return res.status(200).json({
+            success:true,
+            message:"you already view this story",
+            story
+        })
+
+        story.viewers.push(req.user.id)
+
+
+        await story.save()
+
+        return res.status(200).json({
+            success:true,
+            message:"story viewed successfully",
+            viewers:story.viewers,
+            count:story.viewers.length
+        })
+}
+
+
+export const deleteStory = async(req,res)=>{
+    const storyId = req.params.id
+
+    const story = await storyModel.findById(storyId)
+   
+    if(!story) return res.status(404).json({
+        success:false,
+        message:"story not found"
+    })
+
+    if(String(story.user)!== req.user.id) return res.status(403).json({
+        success:false,
+        message:"forbidden"
+    })
+
+    await story.deleteOne()
+
+    return res.status(200).json({
+        success:true,
+        message:"story delted successfull"
+    })
 }

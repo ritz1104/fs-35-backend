@@ -6,7 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import userRouter from './routes/user.routes.js'
 import commentRouter from "./routes/comment.routes.js"
-
+import reelsRouter from './routes/reels.routes.js'
 import storyRouter from './routes/stories.routes.js'
 const app = express();
 
@@ -20,4 +20,5 @@ app.use("/api/posts", postRoutes);
 app.use("/api/users",userRouter)
 app.use("/api/comments",commentRouter)
 app.use("/api/stories",storyRouter)
+app.use("/api/reels",reelsRouter)
 export default app;
