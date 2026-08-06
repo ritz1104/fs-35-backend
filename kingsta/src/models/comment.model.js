@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 const commentSchema = new mongoose.Schema(
     {
@@ -13,6 +13,10 @@ const commentSchema = new mongoose.Schema(
      post:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"posts"
+     },
+     reel:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"reels"
      },
      likes:[{
         type:mongoose.Schema.Types.ObjectId,

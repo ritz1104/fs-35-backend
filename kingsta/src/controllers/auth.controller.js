@@ -1,7 +1,7 @@
 import UserModel from "../models/user.model.js";
 import { sendFiles } from "../services/storage.service.js";
 import { generateToken } from "../utils/token.js";
-
+import jwt from "jsonwebtoken"
 export const registerController = async (req, res) => {
   try {
     let { username, fullName, email, mobile, password, bio, dob } = req.body;
@@ -87,7 +87,7 @@ export const loginController = async (req, res) => {
 
     // Generate Tokens
     const accessToken = generateToken(user._id, "15m");
-    const refreshToken = generateToken(user._id, "1d");
+    const refreshToken = generateToken(user._id, "7d");
 
     // (Optional but Recommended)
     // user.refreshToken = refreshToken;
@@ -125,3 +125,35 @@ export const loginController = async (req, res) => {
     });
   }
 };
+
+
+export const refreshToken = async (req,res)=>{
+  const refreshToken = req.cookies.refreshToken
+  if(!refreshToken) return res.status(401).json({
+    success:false,
+    message:"unauthorized"
+  })
+
+ const verifyRefreshToken = jwt.verify("refreshToken",process.env.JWT_SECRET)
+
+ const user = await UserModel.findById(verifyRefreshToken.id)
+
+ if(!user) return res.status(404).json({
+  success:false,
+  message:"user not found"
+ })
+
+const accessToken = generateToken(user._id,"15m")
+
+res.cookie("accessToken",accessToken,{
+  httpOnly:true,
+  maxAge:15*60*1000,
+  secure:false,
+  sameSite:"strict"
+})
+
+ return res.status(200).json({
+  success:true,
+  message:"access token re-generated successfully"
+ })
+}
