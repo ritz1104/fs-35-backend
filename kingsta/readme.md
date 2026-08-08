@@ -124,13 +124,20 @@ module.exports = sendEmail;
 In your app entry file (for example `src/app.js`), call the email function:
 
 ```js
-const sendEmail = require('./email');
+await sendEmail(
+    user.email,
+    "Reset Your Kingsta Password",
+    `Reset your password using this link: ${resetUrl}`,
+    `
+        <h2>Reset Your Password</h2>
+        <p>Click the button below to reset your password.</p>
 
-sendEmail(
-	'recipient@example.com',
-	'Test Email Subject',
-	'This is a test email sent with Nodemailer using OAuth2.',
-	'<p>This is a test email sent with <b>Nodemailer</b> using OAuth2.</p>'
+        <a href="${resetUrl}">
+            Reset Password
+        </a>
+
+        <p>This link expires in 10 minutes.</p>
+    `
 );
 ```
 
