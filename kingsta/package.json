@@ -19,7 +19,10 @@
     "imagekit": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
+    "morgan": "^1.11.0",
     "multer": "^2.2.0",
-    "nodemailer": "^9.0.5"
+    "nodemailer": "^9.0.5",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   }
 }

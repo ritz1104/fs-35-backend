@@ -160,6 +160,8 @@ res.cookie("accessToken",accessToken,{
 }
 
 export const forgotPassword = async(req,res)=>{
+try {
+    console.log(req.body)
   const {email} = req.body
 
   if(!email) return res.status(400).json({
@@ -199,6 +201,13 @@ return res.status(200).json({
   success:true,
   message:"email sent successfully"
 })
+} catch (error) {
+  return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+}
 
 }
 
