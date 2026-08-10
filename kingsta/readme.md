@@ -152,7 +152,7 @@ If configured correctly, a message ID will be printed in the console and the ema
 ## Troubleshooting
 
 - **Invalid credentials**:
-	- Verify `CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`, and `EMAIL_USER`.
+	- Verify `CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`,    and `EMAIL_USER`.
 	- Ensure credentials belong to the same Google account you authorized.
 - **Insufficient permissions**:
 	- Confirm `https://mail.google.com/` scope was authorized.

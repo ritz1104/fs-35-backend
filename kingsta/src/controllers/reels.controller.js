@@ -8,8 +8,8 @@
 //view reels
 
 import { comment } from "postcss";
-import reelsModel from "../models/reels.model";
-import commentModel from "../models/comment.model";
+import reelsModel from "../models/reels.model.js";
+import commentModel from "../models/comment.model.js";
 
 
 const commentReel = async (req,res)=>{
