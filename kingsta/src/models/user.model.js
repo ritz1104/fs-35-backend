@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import { parse } from "dotenv";
 
 const userSchema = new mongoose.Schema(
   {
@@ -22,9 +23,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "username is required"],
-      unique: true,
-      minlength: 8,
+      minlength:8
     },
     mobile: {
       type: String,
@@ -84,6 +83,17 @@ const userSchema = new mongoose.Schema(
         ref: "posts",
       },
     ],
+    googleId:{
+      type:String,
+      unique:true,
+      sparse:true,
+    },
+    authProvider:{
+      type:String,
+      enum:["local","google"],
+      default:"local"
+    }
+
   },
   {
     timestamps: true,

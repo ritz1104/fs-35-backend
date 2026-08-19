@@ -2,49 +2,49 @@ import PostModel from "../models/post.model.js";
 import UserModel from "../models/user.model.js";
 import { sendFiles } from "../services/storage.service.js";
 
-export const createPostController = async (req, res) => {
-  try {
-    let { caption, location } = req.body;
+  export const createPostController = async (req, res) => {
+    try {
+      let { caption, location } = req.body;
 
-    let files = req.files;
+      let files = req.files;
 
-    const user = await UserModel.findById(req.user.id)
+      const user = await UserModel.findById(req.user.id)
 
-    if (!files)
-      return res.status(400).json({
-        success: false,
-        message: "Media is required",
+      if (!files)
+        return res.status(400).json({
+          success: false,
+          message: "Media is required",
+        });
+
+      let uploadedImages = await Promise.all(
+        files.map(async (elem) => {
+          return await sendFiles(elem.buffer, elem.originalname);
+        })
+      );
+
+      let newPost = await PostModel.create({
+        caption,
+        location,
+        user:req.user.id,
+        media_urls: uploadedImages.map((elem) => elem.url),
       });
 
-    let uploadedImages = await Promise.all(
-      files.map(async (elem) => {
-        return await sendFiles(elem.buffer, elem.originalname);
-      })
-    );
+      user.posts.push(newPost._id)
 
-    let newPost = await PostModel.create({
-      caption,
-      location,
-      user:req.user.id,
-      media_urls: uploadedImages.map((elem) => elem.url),
-    });
-
-    user.posts.push(newPost._id)
-
-    await user.save()
-    return res.status(201).json({
-      success: true,
-      message: "Post created successfully",
-      data: newPost,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error,
-    });
-  }
-};
+      await user.save()
+      return res.status(201).json({
+        success: true,
+        message: "Post created successfully",
+        data: newPost,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error,
+      });
+    }
+  };
 
 export const getAllPostController = async (req, res) => {
   try {

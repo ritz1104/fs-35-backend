@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
 import UserModel from "../models/user.model.js";
+import redis from "../config/redis.config.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -12,6 +13,14 @@ export const authMiddleware = async (req, res, next) => {
         success: false,
         message: "token not found",
       });
+
+
+      const isTokenBlacklisted = await redis.get(`bearer:accessToken:${accessToken}`)
+
+      if(isTokenBlacklisted) return res.status(401).json({
+        success:false,
+        message:"token is invalid"
+      })
 
     let decode = jwt.verify(token, process.env.JWT_SECRET);
 

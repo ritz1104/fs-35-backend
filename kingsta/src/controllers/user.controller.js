@@ -147,7 +147,6 @@ export const followUser = async (req,res)=>{
   })
 }
 
-
 export const unfollowUser = async (req,res)=>{
 
   const targetUserId = req.params.id
@@ -187,10 +186,6 @@ export const unfollowUser = async (req,res)=>{
 
 }
 
-
-
-
-
 export const getFollowers = async (req,res)=>{
   const targetUserId = req.params.id
 
@@ -213,7 +208,6 @@ export const getFollowers = async (req,res)=>{
     count:user.followers.length
   })
 }
-
 
 export const changePassword = async(req,res)=>{
   const {password,newPassword} = req.body

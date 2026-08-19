@@ -3,6 +3,7 @@ import { sendEmail } from "../services/email.service.js";
 import { sendFiles } from "../services/storage.service.js";
 import { generateToken } from "../utils/token.js";
 import jwt from "jsonwebtoken"
+import redis from '../config/redis.config.js'
 export const registerController = async (req, res) => {
   try {
     let { username, fullName, email, mobile, password, bio, dob } = req.body;
@@ -76,6 +77,11 @@ export const loginController = async (req, res) => {
       });
     }
 
+    if(!user.password) return res.status(400).json({
+      success:false,
+      message:"continue with google"
+    })
+
     // Compare password
     const isPasswordCorrect = user.comparePass(password);
 
@@ -128,12 +134,15 @@ export const loginController = async (req, res) => {
 };
 
 
-export const refreshToken = async (req,res)=>{
+export const refreshToken = async (req,res)=>{ 
   const refreshToken = req.cookies.refreshToken
   if(!refreshToken) return res.status(401).json({
     success:false,
     message:"unauthorized"
   })
+
+ 
+
 
  const verifyRefreshToken = jwt.verify("refreshToken",process.env.JWT_SECRET)
 
@@ -245,3 +254,90 @@ export const resetPassword = async (req,res)=>{
   message:"password updated successfully"
  })
 }
+
+export const googleAuth = async (req,res)=>{
+        console.log(req.user)
+        const {emails} = req.user
+        console.log(req.user)
+
+        const email = emails[0].value
+        
+        const user = await UserModel.findOne({email})
+
+        if(user){
+    
+
+            if(!user.googleId){
+                user.googleId = req.user.id
+                await user.save()
+            }
+
+            const refreshToken = generateToken(user._id,"7d")
+            const accessToken = generateToken(user._id,"15min")
+
+            res.cookie("refreshToken",refreshToken,{
+                httpOnly:true,
+                maxAge:7*24*60*60*1000
+            })
+              res.cookie("accessToken",accessToken,{
+                httpOnly:true,
+                maxAge:15*60*1000
+            })
+
+            return res.status(200).json({
+                success:true,
+                message:"user loggedin succesfully",
+                data:user
+            })
+        }
+
+        const newUser = await UserModel.create({
+            username:req.user.name.givenName,
+            fullName:req.user.displayName,
+            profile_pic:req.user.photos?.[0]?.value,
+            googleId:req.user.id,
+            email,
+            authProvider:req.user.provider
+        }) 
+
+        const refreshToken = generateToken(newUser._id,"7d")
+            const accessToken = generateToken(newUser._id,"15min")
+
+            res.cookie("refreshToken",refreshToken,{
+                httpOnly:true,
+                maxAge:7*24*60*60*1000
+            })
+              res.cookie("accessToken",accessToken,{
+                httpOnly:true,
+                maxAge:15*60*1000
+            })
+
+
+            return res.status(201).json({
+                success:true,
+                message:"user register successfully",
+                data:newUser
+            })
+    }
+
+
+    export const logoutUser = async(req,res)=>{
+      const {accessToken,refreshToken} = req.cookies
+
+      if(accessToken){
+       await redis.set(`bearer:accessToken:${accessToken}`,"true")
+      }
+      if(refreshToken){
+        await redis.set(`bearer:refreshToken:${refreshToken}`,"true")
+      }
+
+      res.clearCookie("accessToken")
+      res.clearCookie("refreshToken")
+
+      return res.status(200).json({
+        success:true,
+        message:"user logout successfully"
+      })
+    }
+
+
