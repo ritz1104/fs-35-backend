@@ -22,7 +22,8 @@ const userSchema = new mongoose.Schema({
     },
     password:{
         type:String,
-        minlength:6
+        minlength:6,
+        select:false
     },
     dob:{
         type:Date,
@@ -60,7 +61,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save",function(){
 
-    if(!this.password.isModified("password")) return
+    if(!this.password || !this.password.isModified("password")) return
 
     return this.password = bcrypt.hashSync(this.password,10)
 

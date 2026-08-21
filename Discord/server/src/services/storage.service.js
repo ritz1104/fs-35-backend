@@ -1,5 +1,6 @@
 import Imagekit from "imagekit";
-
+import dotenv from 'dotenv'
+dotenv.config()
 const storageInstance = new Imagekit({
     urlEndpoint:process.env.IK_URL,
     privateKey:process.env.IK_PRIVATE_KEY,
@@ -18,4 +19,4 @@ const sendFiles = async (file,fileName)=>{
 }
 
 
-export default sendFiles``
+export default sendFiles
