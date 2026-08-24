@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save",function(){
 
-    if(!this.password || !this.password.isModified("password")) return
+    if(!this.password || !this.isModified("password")) return
 
     return this.password = bcrypt.hashSync(this.password,10)
 
@@ -69,7 +69,7 @@ userSchema.pre("save",function(){
 
 userSchema.methods.comparePass =  function(password){
 
-    return bcrypt.compareSync(this.password,password)
+    return bcrypt.compareSync(password,this.password)
 }
 
 const userModel = mongoose.model("users",userSchema)

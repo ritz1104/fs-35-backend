@@ -2,6 +2,9 @@ import sendFiles  from "../services/storage.service.js";
 import userModel from "../models/user.model.js";
 import { generateToken } from "../utils/token.js";
 import redis from "../config/redis.config.js";
+import { generateOtp } from "../utils/otp.js";
+import bcrypt from 'bcrypt'
+import sendEmail from "../services/email.service.js";
 export const registerUser = async (req,res)=>{
     const {username,email,password,dob,fullname,mobile_no}= req.body
     const file = req.file
@@ -22,7 +25,7 @@ export const registerUser = async (req,res)=>{
         fullname,
         email,
         password,
-        profile_pic:uploadImage.url,
+        // profile_pic:uploadImage.url,
         mobile_no,
         dob
     })
@@ -77,7 +80,7 @@ export const loginUser = async (req,res)=>{
         message:"continue with google"
     })
 
-    const isPasswordCorrect = comparePass(password)
+    const isPasswordCorrect = user.comparePass(password)
 
     if(!isPasswordCorrect) return res.status(401).json({
         success:false,
@@ -205,3 +208,140 @@ export const logoutUser = async (req,res)=>{
         message:"user logout successfully"
     })
 }
+
+
+export const forgetPassword = async (req,res)=>{
+   try {
+     const  {email} = req.body
+
+    if(!email) return res.status(400).json({
+        success:false,
+        message:"email is required"
+    })
+
+    const user = await userModel.findOne({email})
+
+    if(!user) return res.status(404).json({
+        success:false,
+         message:"user not found"
+    })
+
+    const otp = generateOtp()
+
+  const hashedOtp =  bcrypt.hashSync(otp,10)
+
+ await redis.set(`reset-password-hashedOtp-${email}`,hashedOtp,"EX",10*60)
+
+ await sendEmail(
+    user.email,
+    "Reset Your Discord Password",
+    `Reset your password using this otp: ${otp}`,
+    `
+                <div style="font-family: Arial, sans-serif;">
+                <h2>Password Reset Request</h2>
+
+                <p>Your OTP for resetting your password is:</p>
+
+                <h1 style="letter-spacing: 5px;">
+                    ${otp}
+                </h1>
+
+                <p>This OTP will expire in <strong>10 minutes</strong>.</p>
+
+                <p>If you did not request a password reset, please ignore this email.</p>
+            </div>
+
+    `
+);
+
+return res.status(200).json({
+    success:true,
+    message:"email sent successfully"
+})
+
+   } catch (error) {
+    return res.status(500).json({
+        success:false,
+        message:"ist",
+        error:error.message
+    })
+   }
+}
+
+
+export const verifyOtp = async  (req,res)=>{
+   const {email,otp}= req.body
+
+   if(!otp) return res.status(400).json({
+    success:false,
+    message:"otp is required"
+   })
+
+   const hashedOtp = await redis.get(`reset-password-hashedOtp-${email}`)
+   
+   if(!hashedOtp) return res.status(404).json({
+    success:false,
+    message:"otp is expired or not found"
+   })
+
+
+  const isValid =  bcrypt.compareSync(otp,hashedOtp)
+
+
+  if(!isValid)  return res.status(403).json({
+    success:false,
+    message:"invalid otp "
+  })
+
+
+  await redis.del(`reset-password-hashedOtp-${email}`)
+
+  const resetToken = generateToken(email,"15min")
+
+ const hashedResetToken = bcrypt.hashSync(resetToken,10)
+
+ await redis.set(`reset-token-hashedResetToken-${email}`,hashedResetToken,"EX",10*60)
+
+ return res.status(200).json({
+    success:true,
+    message:"otp verified successfully",
+    resetToken
+ })
+}
+
+export const resetPassword = async(req,res)=>{
+    const {email,resetToken,newPassword} = req.body
+
+    if(!email || !resetToken|| !newPassword) return res.status(400).json({
+        success:false,
+        message:"email,resetToken and newpassword is required"
+    })
+
+    const hashedResetToken = await redis.get(`reset-token-hashedResetToken-${email}`)
+
+    if(!hashedResetToken) return res.status(400).json({
+        success:false,
+        message:"your session for reset password is expired pls try again"
+    })
+
+    const user = await userModel.findOne({email}).select("password")
+
+    if(!user) return res.status(404).json({
+        success:false,
+        message:"user not found"
+    })
+
+    user.password = newPassword
+
+    await user.save()
+
+
+    await redis.del(`reset-token-hashedResetToken-${email}`)
+
+    return res.status(200).json({
+        success:true,
+        message:"password reset successfully"
+    })
+
+}
+
