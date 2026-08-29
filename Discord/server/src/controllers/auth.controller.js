@@ -5,6 +5,8 @@ import redis from "../config/redis.config.js";
 import { generateOtp } from "../utils/otp.js";
 import bcrypt from 'bcrypt'
 import sendEmail from "../services/email.service.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
 export const registerUser = async (req,res)=>{
     const {username,email,password,dob,fullname,mobile_no}= req.body
     const file = req.file
@@ -59,8 +61,9 @@ export const registerUser = async (req,res)=>{
     })
 }
 
-export const loginUser = async (req,res)=>{
-    const {email,password} = req.body
+export const loginUser = async (req,res,next)=>{
+   try {
+     const {email,password} = req.body
 
     if(!email || !password) return res.status(400).json({
         success:false,
@@ -69,10 +72,7 @@ export const loginUser = async (req,res)=>{
 
     const user = await userModel.findOne({email}).select("password")
 
-    if(!user) return res.status(404).json({
-        success:false,
-        message:"user not found"
-    })
+    if(!user) throw new ApiError(404,"user not found")
 
 
     if(!user.password || user.authProvider==='google') return res.status(400).json({
@@ -82,10 +82,7 @@ export const loginUser = async (req,res)=>{
 
     const isPasswordCorrect = user.comparePass(password)
 
-    if(!isPasswordCorrect) return res.status(401).json({
-        success:false,
-        message:"Invalid credential"
-    })
+    if(!isPasswordCorrect) throw new ApiError(401,"invalid credential")
 
     const accessToken = generateToken(user._id,"15min")
     const refreshToken = generateToken(user._id,"2d")
@@ -109,11 +106,12 @@ export const loginUser = async (req,res)=>{
     let userData = user.toObject()
 
     delete userData.password
-    return res.status(200).json({
-        success:true,
-        message:"user login successfully",
-        user:userData
-    })
+    return res.status(200).json(
+        new ApiResponse(200,userData,"user login successfully")
+    )
+   } catch (error) {
+    next(error)
+   }
     
 
 }
@@ -296,7 +294,7 @@ export const verifyOtp = async  (req,res)=>{
 
   await redis.del(`reset-password-hashedOtp-${email}`)
 
-  const resetToken = generateToken(email,"15min")
+  const resetToken = generateToken(email,"10min")
 
  const hashedResetToken = bcrypt.hashSync(resetToken,10)
 
@@ -335,7 +333,7 @@ export const resetPassword = async(req,res)=>{
 
     await user.save()
 
-
+  
     await redis.del(`reset-token-hashedResetToken-${email}`)
 
     return res.status(200).json({
@@ -345,3 +343,57 @@ export const resetPassword = async(req,res)=>{
 
 }
 
+export const refreshToken = async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized",
+        });
+    }
+
+    // Check if token is blacklisted
+    const isBlacklisted = await redis.get(
+        `blacklist:${refreshToken}`
+    );
+
+    if (isBlacklisted) {
+        return res.status(401).json({
+            success: false,
+            message: "Refresh token has been revoked",
+        });
+    }
+
+    const decoded = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await userModel.findById(decoded.id);
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+
+    const accessToken = generateToken(
+        user._id,
+        "15m",
+        process.env.ACCESS_TOKEN_SECRET
+    );
+
+    res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        maxAge: 15 * 60 * 1000,
+        secure: false,
+        sameSite: "strict",
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "Access token regenerated successfully",
+    });
+};
