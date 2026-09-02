@@ -4,6 +4,7 @@ dotenv.config()
 import cookieParser from 'cookie-parser'
 
 import authRoutes from '../routes/auth.routes.js'
+import serverRoutes from '../routes/server.route.js'
 import passport from 'passport'
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20'
 import redis from '../config/redis.config.js'
@@ -28,8 +29,12 @@ passport.use(new GoogleStrategy({
 }
 ))    
 
-app.use('/api/auth',authRoutes)
+console.log("🔥 APP FILE LOADED");
 
+app.use('/api/auth', authRoutes);
+
+console.log("🔥 AUTH ROUTES MOUNTED");
+app.use('/api/server',serverRoutes)
 
 app.use(errorMiddleware)
 

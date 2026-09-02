@@ -7,15 +7,13 @@ import bcrypt from 'bcrypt'
 import sendEmail from "../services/email.service.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-export const registerUser = async (req,res)=>{
-    const {username,email,password,dob,fullname,mobile_no}= req.body
+export const registerUser = async (req,res,next)=>{
+  try {
+      const {username,email,password,dob,fullname,mobile_no}= req.body
+      console.log(req.body)
     const file = req.file
 
-    if(!username || !email || !fullname) return res.status(400).json({
-        success:false,
-        message:"field are required"
-    })
-
+  
     let uploadImage = null;
 
     if(file) {
@@ -27,7 +25,7 @@ export const registerUser = async (req,res)=>{
         fullname,
         email,
         password,
-        // profile_pic:uploadImage.url,
+        profile_pic:uploadImage?.url || "",
         mobile_no,
         dob
     })
@@ -59,16 +57,17 @@ export const registerUser = async (req,res)=>{
         message:"user register successfully",
         user
     })
+  } catch (error) {
+    console.log(error.message)
+    next(error)
+  }
 }
 
 export const loginUser = async (req,res,next)=>{
    try {
      const {email,password} = req.body
 
-    if(!email || !password) return res.status(400).json({
-        success:false,
-        message:"email and password are required"
-    })
+    
 
     const user = await userModel.findOne({email}).select("password")
 
@@ -111,9 +110,7 @@ export const loginUser = async (req,res,next)=>{
     )
    } catch (error) {
     next(error)
-   }
-    
-
+   }    
 }
 
 export const googleAuth = async (req,res)=>{

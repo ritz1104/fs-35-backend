@@ -4,16 +4,10 @@ const userSchema = new mongoose.Schema({
     username:{
         type:String,
         required:true,
-        unique:true,
-        trim:true,
-        minlength:3,
-        maxlength:20
     },
     fullname:{
         type:String,
         required:true,
-        minlength:2,
-        maxlength:50
     },
     email:{
         type:String,
@@ -22,7 +16,6 @@ const userSchema = new mongoose.Schema({
     },
     password:{
         type:String,
-        minlength:6,
         select:false
     },
     dob:{

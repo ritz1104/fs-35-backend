@@ -4,7 +4,7 @@ export const errorMiddleware = (err,req,res,next)=>{
 
     return res.status(statusCode).json({
         success:false,
-        message:err.message,
+        message:err.message || "Internal server error",
         errors:err.errors || []
     })
 }

@@ -1,40 +1,52 @@
 import dotenv from "dotenv";
 dotenv.config();
+
 import jwt from "jsonwebtoken";
+
 import UserModel from "../models/user.model.js";
 import redis from "../config/redis.config.js";
 import ApiError from "../utils/ApiError.js";
 
 export const authMiddleware = async (req, res, next) => {
-  try {
-    let token = req.cookies.accessToken;
+    try {
+        const token = req.cookies.accessToken;
 
-    if (!token) throw new ApiError(400,"token is required")
+        // 1. Check token exists
+        if (!token) {
+            throw new ApiError(401, "Access token is required");
+        }
 
+        // 2. Check blacklist
+        const isTokenBlacklisted = await redis.get(
+            `bearer:accessToken:${token}`
+        );
 
-      const isTokenBlacklisted = await redis.get(`bearer:accessToken:${accessToken}`)
+        if (isTokenBlacklisted) {
+            throw new ApiError(401, "Token is invalid");
+        }
 
-      if(isTokenBlacklisted) return res.status(401).json({
-        success:false,
-        message:"token is invalid"
-      })
+        // 3. Verify JWT
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET_KEY
+        );
 
-    let decode = jwt.verify(token, process.env.JWT_SECRET);
+        // 4. Find user
+        const user = await UserModel
+            .findById(decoded.id)
+            .select("-password");
 
-    if (!decode)
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
+        if (!user) {
+            throw new ApiError(401, "User not found");
+        }
 
-    let user = await UserModel.findById(decode.id).select("-password");
+        // 5. Attach user to request
+        req.user = user;
 
-    req.user = user;
-    next();
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: "Validation error",
-    });
-  }
+        // 6. Continue
+        next();
+
+    } catch (error) {
+        next(error);
+    }
 };
