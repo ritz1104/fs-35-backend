@@ -9,6 +9,9 @@ import passport from 'passport'
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20'
 import redis from '../config/redis.config.js'
 import { errorMiddleware } from '../middlewares/error.middleware.js'
+import serverMemberRoutes from '../routes/serverMember.routes.js'
+import roleRoutes from '../routes/role.routes.js'
+import userRoutes from '../routes/user.routes.js'
 const app = express()
 
 
@@ -35,6 +38,9 @@ app.use('/api/auth', authRoutes);
 
 console.log("🔥 AUTH ROUTES MOUNTED");
 app.use('/api/server',serverRoutes)
+app.use('/api/server',serverMemberRoutes)
+app.use('/api/server',roleRoutes)
+app.use('/api/user',userRoutes)
 
 app.use(errorMiddleware)
 

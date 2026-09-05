@@ -39,10 +39,7 @@ const userSchema = new mongoose.Schema({
         enum:["local","google"],
         default:"local"
     },
-    server:[{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:"servers"
-    }],
+   
 
  friends:[{
       type:mongoose.Schema.Types.ObjectId,

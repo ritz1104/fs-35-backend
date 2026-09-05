@@ -10,11 +10,11 @@ const serverMemberSchema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"servers"
     },
-    role:[{
+    roles:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"roles"
     }]
-})
+},{timestamps:true})
 
 const serverMemberModel = mongoose.model("ServerMember",serverMemberSchema)
 
