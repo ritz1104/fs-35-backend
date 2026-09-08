@@ -86,3 +86,86 @@ export const removeMember = async (req, res, next) => {
         next(error);
     }
 };
+
+export const updateMemberRoles = async (req, res, next) => {
+    try {
+        const { serverId, userId } = req.params;
+        const { roles } = req.body;
+
+        if (!Array.isArray(roles)) {
+            throw new ApiError(
+                400,
+                "Roles must be an array"
+            );
+        }
+
+        const server = await serverModel.findById(serverId);
+
+        if (!server) {
+            throw new ApiError(404, "Server not found");
+        }
+
+        // For MVP, only owner can manage roles
+        if (server.owner.toString() !== req.user._id.toString()) {
+            throw new ApiError(
+                403,
+                "Only server owner can manage member roles"
+            );
+        }
+
+        const member = await serverMemberModel.findOne({
+            server: serverId,
+            user: userId
+        });
+
+        if (!member) {
+            throw new ApiError(
+                404,
+                "Member not found in this server"
+            );
+        }
+
+        // Owner's roles should not be changed
+        if (server.owner.toString() === userId.toString()) {
+            throw new ApiError(
+                400,
+                "Server owner's roles cannot be changed"
+            );
+        }
+
+        // Make sure all roles belong to this server
+        const validRoles = await roleModel.find({
+            _id: { $in: roles },
+            server: serverId
+        });
+
+        if (validRoles.length !== roles.length) {
+            throw new ApiError(
+                400,
+                "One or more roles are invalid"
+            );
+        }
+
+        member.roles = roles;
+
+        await member.save();
+
+        const updatedMember = await serverMemberModel
+            .findById(member._id)
+            .populate("user", "username fullname profile_pic")
+            .populate(
+                "roles",
+                "name permissions color position"
+            );
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                updatedMember,
+                "Member roles updated successfully"
+            )
+        );
+    } catch (error) {
+        next(error);
+    }
+};

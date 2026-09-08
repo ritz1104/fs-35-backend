@@ -1,3 +1,4 @@
+import channelModel from "../models/channel.model.js";
 import roleModel from "../models/role.model.js";
 import serverModel from "../models/server.model.js";
 import serverMemberModel from "../models/serverMember.model.js";
@@ -57,6 +58,24 @@ export const createServer = async (req,res,next)=>{
     position: 100
         })
         
+        
+        const memberRole = await roleModel.create({
+            name: "member",
+            server: server._id,
+            permissions: [],
+            position: 10
+        })
+
+        const defaultChannels= await channelModel.create({
+            name:"#general-chat",
+            server:server._id,
+            position:1
+        },{
+            name:"announcement",
+            server:server._id,
+            position:2,
+            type:"voice"
+        })
      const serverMember = await createServerMember(req.user.id,server._id,[ownerRole._id])
     
         
@@ -93,10 +112,12 @@ export const joinServer = async(req,res,next)=>{
         if(alreadyExists) throw new ApiError(400,"you are already a member of this server")
 
 
-            const memberRole = roleModel.findOne({
+            const memberRole = await roleModel.findOne({
                 server:server._id,
                 name:"member"
             })
+
+            console.log(memberRole,server,req.user.id)
 
         await createServerMember(req.user.id,server._id,[memberRole._id])
       
