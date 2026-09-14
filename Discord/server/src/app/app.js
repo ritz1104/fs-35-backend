@@ -12,7 +12,12 @@ import { errorMiddleware } from '../middlewares/error.middleware.js'
 import serverMemberRoutes from '../routes/serverMember.routes.js'
 import roleRoutes from '../routes/role.routes.js'
 import userRoutes from '../routes/user.routes.js'
+import http from 'http'
+import { initializeSocket } from '../socket/socket.js'
 const app = express()
+export const server = http.createServer(app)
+
+initializeSocket(server)
 
 
 
