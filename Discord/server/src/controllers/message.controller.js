@@ -1,6 +1,9 @@
-import channelModel from "../models/channel.model";
-import messageModel from "../models/message.model";
-import serverMemberModel from "../models/serverMember.model";
+import channelModel from "../models/channel.model.js";
+import messageModel from "../models/message.model.js";
+import serverMemberModel from "../models/serverMember.model.js";
+import { getIO } from "../socket/socket.js";
+
+import ApiResponse from "../utils/ApiResponse.js";
 
 
 
@@ -64,15 +67,22 @@ export const createMessage = async (req, res, next) => {
 
         const message = await messageModel.create({
             content: content?.trim() || "",
-            author: req.user._id,
-            channel: channelId,
+            author_id: req.user._id,
+            channel_id: channelId,
             attachments
         });
 
+        const messageDetails = await messageModel.findById(message._id).populate("author_id","profile_pic username")
+
+       const io = getIO()
+
+       io.to(`channel:${channelId}`).emit(
+        "message:new",messageDetails
+       )
         return res.status(201).json(
             new ApiResponse(
                 201,
-                message,
+               "message",
                 "Message created successfully"
             )
         );

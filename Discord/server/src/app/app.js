@@ -12,6 +12,7 @@ import { errorMiddleware } from '../middlewares/error.middleware.js'
 import serverMemberRoutes from '../routes/serverMember.routes.js'
 import roleRoutes from '../routes/role.routes.js'
 import userRoutes from '../routes/user.routes.js'
+import messageRoutes from '../routes/message.routes.js'
 import http from 'http'
 import { initializeSocket } from '../socket/socket.js'
 const app = express()
@@ -43,9 +44,10 @@ app.use('/api/auth', authRoutes);
 
 console.log("🔥 AUTH ROUTES MOUNTED");
 app.use('/api/server',serverRoutes)
-app.use('/api/server',serverMemberRoutes)
-app.use('/api/server',roleRoutes)
+app.use('/api/serverMembers',serverMemberRoutes)
+app.use('/api/roles',roleRoutes)
 app.use('/api/user',userRoutes)
+app.use('/api/messages',messageRoutes)
 
 app.use(errorMiddleware)
 
