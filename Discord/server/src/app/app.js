@@ -15,6 +15,7 @@ import userRoutes from '../routes/user.routes.js'
 import messageRoutes from '../routes/message.routes.js'
 import http from 'http'
 import { initializeSocket } from '../socket/socket.js'
+import cors from 'cors'
 const app = express()
 export const server = http.createServer(app)
 
@@ -28,6 +29,13 @@ app.use(passport.initialize());
 app.use(express.json())
 app.use(cookieParser())
 
+
+app.use(cors(
+    {
+        origin:'http://localhost:5173',
+        credentials:true
+    }
+))
 
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,

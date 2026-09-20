@@ -10,7 +10,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 export const registerUser = async (req,res,next)=>{
   try {
       const {username,email,password,dob,fullname,mobile_no}= req.body
-      console.log(req.body)
+      
     const file = req.file
 
   
@@ -59,7 +59,7 @@ export const registerUser = async (req,res,next)=>{
     })
   } catch (error) {
     console.log(error.message)
-    next(error)
+    next(error.message)
   }
 }
 
@@ -138,6 +138,8 @@ export const googleAuth = async (req,res)=>{
         maxAge:2*24*60*60*1000
     })
 
+    res.redirect('http://localhost:5173/')
+
     return res.status(200).json({
         success:true,
         message:"user loggedin successfully",
@@ -171,6 +173,7 @@ export const googleAuth = async (req,res)=>{
         maxAge:2*24*60*60*1000
     })
 
+      res.redirect('http://localhost:5173/')
     return res.status(201).json({
         success:true,
         message:"user register successfully",
