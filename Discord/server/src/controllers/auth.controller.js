@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt'
 import sendEmail from "../services/email.service.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 export const registerUser = async (req,res,next)=>{
   try {
       const {username,email,password,dob,fullname,mobile_no}= req.body
@@ -69,7 +70,7 @@ export const loginUser = async (req,res,next)=>{
 
     
 
-    const user = await userModel.findOne({email}).select("password")
+    const user = await userModel.findOne({email}).select("+password")
 
     if(!user) throw new ApiError(404,"user not found")
 
@@ -354,9 +355,7 @@ export const refreshToken = async (req, res) => {
     }
 
     // Check if token is blacklisted
-    const isBlacklisted = await redis.get(
-        `blacklist:${refreshToken}`
-    );
+    const isBlacklisted = await redis.get(`Bearer:refreshToken:${refreshToken}`);
 
     if (isBlacklisted) {
         return res.status(401).json({
@@ -365,10 +364,7 @@ export const refreshToken = async (req, res) => {
         });
     }
 
-    const decoded = jwt.verify(
-        refreshToken,
-        process.env.REFRESH_TOKEN_SECRET
-    );
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_KEY);
 
     const user = await userModel.findById(decoded.id);
 
@@ -379,11 +375,7 @@ export const refreshToken = async (req, res) => {
         });
     }
 
-    const accessToken = generateToken(
-        user._id,
-        "15m",
-        process.env.ACCESS_TOKEN_SECRET
-    );
+    const accessToken = generateToken(user._id, "15m");
 
     res.cookie("accessToken", accessToken, {
         httpOnly: true,

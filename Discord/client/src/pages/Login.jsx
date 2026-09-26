@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { loginUser } from "../services/auth.service.js";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
-import { loginUserAsync, setUser } from "../features/authSlice.js";
+import { loginUserAsync } from "../features/authSlice.js";
+import api from "../config/api.js";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,14 +25,9 @@ function Login() {
 
     const dispatch = useDispatch()
     const naviagate = useNavigate()
-  const submitHandler =  (data)=> {
-
-  let response =  dispatch(loginUserAsync(data))
-
-  
-  if(response) {
+  const submitHandler = async (data)=> {
+    await dispatch(loginUserAsync(data)).unwrap()
     naviagate("/")
-  }
     }
   return (
     <main className="auth-page">
@@ -134,7 +129,7 @@ function Login() {
               <span>or continue with</span>
             </div>
             <button onClick={()=>{
-              return  window.location.href = `${api}/auth/google`
+              return window.location.href = `${api.defaults.baseURL}/auth/google`
             }} type="button" className="google-button">
               <span>G</span> Continue with Google
             </button>

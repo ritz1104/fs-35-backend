@@ -13,6 +13,7 @@ import serverMemberRoutes from '../routes/serverMember.routes.js'
 import roleRoutes from '../routes/role.routes.js'
 import userRoutes from '../routes/user.routes.js'
 import messageRoutes from '../routes/message.routes.js'
+import channelRoutes from '../routes/channel.routes.js'
 import http from 'http'
 import { initializeSocket } from '../socket/socket.js'
 import cors from 'cors'
@@ -51,11 +52,15 @@ console.log("🔥 APP FILE LOADED");
 app.use('/api/auth', authRoutes);
 
 console.log("🔥 AUTH ROUTES MOUNTED");
+app.use('/api/servers',serverRoutes)
 app.use('/api/server',serverRoutes)
+app.use('/api/servers',channelRoutes)
+app.use('/api/servers',serverMemberRoutes)
 app.use('/api/serverMembers',serverMemberRoutes)
 app.use('/api/roles',roleRoutes)
 app.use('/api/user',userRoutes)
 app.use('/api/messages',messageRoutes)
+app.use('/api/channels',messageRoutes)
 
 app.use(errorMiddleware)
 

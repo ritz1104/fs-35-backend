@@ -18,7 +18,7 @@ export const authMiddleware = async (req, res, next) => {
 
         // 2. Check blacklist
         const isTokenBlacklisted = await redis.get(
-            `bearer:accessToken:${token}`
+            `Bearer:accessToken:${token}`
         );
 
         if (isTokenBlacklisted) {

@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser } from "../services/auth.service";
 import api from "../config/api.js";
+import { useDispatch } from "react-redux";
+import { registerUserAsync } from "../features/authSlice.js";
 
 
 
@@ -24,12 +25,13 @@ function Register() {
   } = useForm({ mode: "onBlur" });
 
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
   // const handleContinueWithGoogle = ()=>{
   //   return 
   // }
 
-  const onSubmit =async  (data) => {
+  const onSubmit = async (data) => {
      const formData = new FormData()
   
      formData.append("username",data.username)
@@ -38,15 +40,12 @@ function Register() {
      formData.append("password",data.password)
 
      if(data.profile_pic?.[0]){
-      formData.append("profile_pic",data.profile_pic[0])
+      formData.append("image",data.profile_pic[0])
      }
 
 
-    const response = await registerUser(formData)
-
-    if(response) {
-      navigate('/welcome')
-    }
+    await dispatch(registerUserAsync(formData)).unwrap()
+    navigate('/')
   
     }
 
@@ -184,7 +183,7 @@ function Register() {
               <span>or</span>
             </div>
             <button onClick={()=>{
-              return  window.location.href = `${api}/auth/google`
+              return window.location.href = `${api.defaults.baseURL}/auth/google`
             }} type="button" className="google-button">
               <span>G</span> Continue with Google
             </button>

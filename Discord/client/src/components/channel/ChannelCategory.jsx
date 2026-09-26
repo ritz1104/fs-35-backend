@@ -1,7 +1,20 @@
-import { ChevronDown, Plus } from 'lucide-react'
+import { ChevronDown, Plus } from "lucide-react";
 
-function ChannelCategory({ title, children }) {
-  return <section className="channel-category"><div className="category-head"><span><ChevronDown size={12} />{title}</span><button title={`Add ${title.toLowerCase()}`}><Plus size={15} /></button></div>{children}</section>
+function ChannelCategory({ title, children, onAdd }) {
+  return (
+    <section className="channel-category">
+      <div className="category-head">
+        <span>
+          <ChevronDown size={12} />
+          {title}
+        </span>
+        <button type="button" title={`Add ${title.toLowerCase()}`} onClick={onAdd}>
+          <Plus size={15} />
+        </button>
+      </div>
+      {children}
+    </section>
+  );
 }
 
-export default ChannelCategory
+export default ChannelCategory;

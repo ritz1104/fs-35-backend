@@ -1,5 +1,4 @@
 import { Server } from "socket.io";
-import { server } from "../app/app.js";
 import { socketAuthMiddleware } from "../middlewares/soketAuth.middleware.js";
 import channelModel from "../models/channel.model.js";
 import serverMemberModel from "../models/serverMember.model.js";
@@ -9,7 +8,8 @@ import ApiError from "../utils/ApiError.js";
 let io;
 
 export const initializeSocket = (server)=>{
-     io = new Server(server)
+    io = new Server(server, { 
+        cors: { origin: "http://localhost:5173", credentials: true } })
 
 
      io.use(socketAuthMiddleware)
@@ -38,10 +38,9 @@ export const initializeSocket = (server)=>{
             }
 
             socket.join(`channel:${channelId}`)
+            console.log("join :",channelId)
             } catch (error) {
-                socket.emit("channel:error",()=>{
-                    console.log(error)
-                })
+                socket.emit("channel:error", { message: error.message, statusCode: error.statusCode || 500 })
             }
         })
           

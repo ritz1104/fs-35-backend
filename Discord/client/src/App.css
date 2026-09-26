@@ -789,6 +789,22 @@
   border-radius: 11px;
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
 }
+.creation-modal { width: min(430px, calc(100vw - 32px)); padding: 22px; color: #f5f5f7; background: #232731; border: 1px solid #3a4050; border-radius: 11px; box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42); }
+.creation-modal-head, .creation-actions { display: flex; align-items: center; justify-content: space-between; }
+.creation-modal-head { margin-bottom: 22px; }
+.creation-modal h2 { margin: 4px 0 0; font-size: 20px; }
+.creation-kicker, .optional { color: #9098a7; font-size: 9px; letter-spacing: .8px; text-transform: uppercase; }
+.modal-close, .cancel-button { color: #aeb4c1; background: transparent; }
+.modal-close { display: grid; place-items: center; padding: 5px; }
+.creation-modal label { display: block; margin-bottom: 16px; color: #c7cbd5; font-size: 11px; font-weight: 700; }
+.creation-modal input, .creation-modal textarea, .creation-modal select { display: block; box-sizing: border-box; width: 100%; margin-top: 7px; padding: 10px 11px; color: #f5f5f7; background: #171a22; border: 1px solid #3a4050; border-radius: 6px; outline: 0; font: inherit; font-weight: 400; }
+.creation-modal textarea { resize: vertical; }
+.creation-modal input:focus, .creation-modal textarea:focus, .creation-modal select:focus { border-color: var(--accent); }
+.optional { margin-left: 5px; font-weight: 400; }
+.creation-error { margin: -3px 0 14px; color: #f38d9b; font-size: 11px; }
+.creation-actions { justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.cancel-button, .primary-button { padding: 9px 13px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.primary-button { color: #fff; background: var(--accent); }
 .search-modal-head {
   display: flex;
   align-items: center;

@@ -2,6 +2,8 @@ import channelModel from "../models/channel.model.js";
 import messageModel from "../models/message.model.js";
 import serverMemberModel from "../models/serverMember.model.js";
 import { getIO } from "../socket/socket.js";
+import ApiError from "../utils/ApiError.js";
+import sendFiles from "../services/storage.service.js";
 
 import ApiResponse from "../utils/ApiResponse.js";
 
@@ -82,7 +84,7 @@ export const createMessage = async (req, res, next) => {
         return res.status(201).json(
             new ApiResponse(
                 201,
-               "message",
+               messageDetails,
                 "Message created successfully"
             )
         );
@@ -93,7 +95,7 @@ export const createMessage = async (req, res, next) => {
 
 
 
-const getAllChannelMessage = async (req,res,next)=>{
+export const getAllChannelMessage = async (req,res,next)=>{
     try {
         
         const {channelId} = req.params
@@ -117,39 +119,9 @@ const getAllChannelMessage = async (req,res,next)=>{
             );
         }
 
-        const messages  =  await messageModel.aggregate(
-            [
-            {
-                $match:{
-                    channel_id:channel._id
-                }
-            },
-            {
-                $lookup:{
-                    from:"users",
-                    localField:"author_id",
-                    foreignField:"_id",
-                    as:"author_details"
-                }
-            },
-            {
-                $unwind:"$author_details"
-            },
-            {
-                $project:{
-                    content:1,
-                    createdAt:1,
-
-                    "author_details.username":1                }
-            },
-            
-            {
-                $sort:{
-                    createdAt:-1
-                }
-            }
-        ]
-        )
+        const messages = await messageModel.find({ channel_id: channel._id })
+            .populate("author_id", "profile_pic username fullname")
+            .sort({ createdAt: 1 });
 
 
         return res.status(200).json(
@@ -160,3 +132,33 @@ const getAllChannelMessage = async (req,res,next)=>{
          next(error);
     }
 }
+
+export const getMessage = async (req, res, next) => {
+    try {
+        const message = await messageModel.findOne({ _id: req.params.messageId, channel_id: req.params.channelId }).populate("author_id", "profile_pic username fullname");
+        if (!message) throw new ApiError(404, "Message not found");
+        return res.status(200).json(new ApiResponse(200, message, "Message fetched successfully"));
+    } catch (error) { next(error); }
+};
+
+export const updateMessage = async (req, res, next) => {
+    try {
+        const message = await messageModel.findOne({ _id: req.params.messageId, channel_id: req.params.channelId });
+        if (!message) throw new ApiError(404, "Message not found");
+        if (message.author_id.toString() !== req.user._id.toString()) throw new ApiError(403, "Only the author can update this message");
+        message.content = req.body.content?.trim() ?? message.content;
+        await message.save();
+        const updated = await message.populate("author_id", "profile_pic username fullname");
+        return res.status(200).json(new ApiResponse(200, updated, "Message updated successfully"));
+    } catch (error) { next(error); }
+};
+
+export const deleteMessage = async (req, res, next) => {
+    try {
+        const message = await messageModel.findOne({ _id: req.params.messageId, channel_id: req.params.channelId });
+        if (!message) throw new ApiError(404, "Message not found");
+        if (message.author_id.toString() !== req.user._id.toString()) throw new ApiError(403, "Only the author can delete this message");
+        await messageModel.findByIdAndDelete(message._id);
+        return res.status(200).json(new ApiResponse(200, null, "Message deleted successfully"));
+    } catch (error) { next(error); }
+};

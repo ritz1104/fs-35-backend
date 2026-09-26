@@ -11,7 +11,7 @@ try {
 
     if(!cookies) {throw new ApiError(401,"authentication  is required")}
 
-    const accessToken = cookies.split(";").find((cookie)=>cookie.startsWith("accessToken="))?.split("=")[1]
+    const accessToken = cookies.split(";").map((cookie) => cookie.trim()).find((cookie)=>cookie.startsWith("accessToken="))?.split("=").slice(1).join("=")
 
 
     if(!accessToken) {

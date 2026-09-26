@@ -3,10 +3,13 @@ import ChatLayout from '../components/layout/ChatLayout'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
 import ServerWelcome from '../pages/ServerWelcome'
+import PrivateRoutes from './privateRoutes'
 
 const router = createBrowserRouter([
   { path: '/',
-     element: <ChatLayout /> 
+     element:<PrivateRoutes>
+       <ChatLayout/>
+     </PrivateRoutes> 
     },
   { path: '/welcome',
    element: <ServerWelcome /> 
