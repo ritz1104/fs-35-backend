@@ -1,17 +1,24 @@
 import { Gift, Hash, Plus, Send, Smile } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMessages, sendMessage } from "../../features/messageSlice";
 import ChatHeader from "../chat/ChatHeader";
 import Message from "../chat/Message";
 import useChannelSocket from "../../hooks/useChannelSocket";
 import useChannelEvent from "../../hooks/useChannelEvent";
+import useMessageSocket from "../../hooks/useMessageSocket";
+
 
 
 function ChatArea() {
   const dispatch = useDispatch();
-
-  const [content, setContent] = useState("");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = useForm({ defaultValues: { content: "" } });
 
   const selectedChannel = useSelector(
     (state) => state.channels.selectedChannel,
@@ -23,21 +30,27 @@ function ChatArea() {
 
   useChannelSocket(channelId)
   useChannelEvent()
-
+  useMessageSocket()
   const channelName = selectedChannel?.name?.replace(/^#/, "") || "general";
 
   useEffect(() => {
     if (channelId) dispatch(fetchMessages(channelId));
   }, [dispatch, channelId]);
 
-  const submitMessage = async (event) => {
-    event.preventDefault();
+  const submitMessage = async ({ content,attachments }) => {
+    const cleanContent = content.trim();
+    if (!channelId || !cleanContent) return;
 
-    if (!channelId || !content.trim()) return;
+    console.log(content,attachments)
 
-    await dispatch(sendMessage({ channelId, content: content.trim() }));
+    const formData = new FormData()
 
-    setContent("");
+    formData.append("content",cleanContent),
+    formData.append("attachments",attachments)
+
+    console.log(formData)
+    await dispatch(sendMessage({ channelId, formData})).unwrap();
+    reset();
   };
 
   const viewMessages = messages.map((message) => {
@@ -84,15 +97,15 @@ function ChatArea() {
         ))}
       </div>
       <div className="composer-wrap">
-        <form className="composer" onSubmit={submitMessage}>
-          <button type="button" title="Add attachment">
+        <form className="composer" onSubmit={handleSubmit(submitMessage)} noValidate>
+          <input {...register("attachments")} type="file" placeholder="Add attachment"/>
             <Plus size={20} />
-          </button>
+          
           <input
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
             placeholder={`Message #${channelName}`}
             aria-label={`Message #${channelName}`}
+            disabled={!channelId || isSubmitting}
+            {...register("content")}
           />
           <button type="button" title="Send a gift">
             <Gift size={18} />
@@ -103,7 +116,7 @@ function ChatArea() {
           <button type="button" title="Add emoji">
             <Smile size={19} />
           </button>
-          <button type="submit" className="send-button" title="Send message">
+          <button type="submit" className="send-button" title="Send message" disabled={!channelId || isSubmitting}>
             <Send size={17} />
           </button>
         </form>

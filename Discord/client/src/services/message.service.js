@@ -6,10 +6,11 @@ export const getMessages = async (channelId) =>
   data(await api.get(`/channels/${channelId}/messages`));
 
 
-export const createMessage = async ({ channelId, ...payload }) =>
-  data(await api.post(`/channels/${channelId}/messages`, payload));
+export const createMessage = async ({ channelId, formData }) => {
+  console.log(formData)
+ return data(await api.post(`/channels/${channelId}/messages`, formData));
 
-
+}
 export const getMessage = async ({ channelId, messageId }) =>
   data(await api.get(`/channels/${channelId}/messages/${messageId}`));
 

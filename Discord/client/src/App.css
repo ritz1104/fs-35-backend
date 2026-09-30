@@ -802,6 +802,7 @@
 .creation-modal input:focus, .creation-modal textarea:focus, .creation-modal select:focus { border-color: var(--accent); }
 .optional { margin-left: 5px; font-weight: 400; }
 .creation-error { margin: -3px 0 14px; color: #f38d9b; font-size: 11px; }
+.join-description { margin: -6px 0 18px; color: #9da4b5; font-size: 12px; line-height: 1.5; }
 .creation-actions { justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .cancel-button, .primary-button { padding: 9px 13px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 .primary-button { color: #fff; background: var(--accent); }

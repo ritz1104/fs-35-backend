@@ -69,10 +69,7 @@ const messageSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(sendMessage.fulfilled, (state, action) => {
-        const message = action.payload?.message || action.payload;
-        if (message?._id || message?.id) state.messages.push(message);
-      })
+      
       .addCase(sendMessage.rejected, (state, action) => {
         state.error = action.payload;
       });

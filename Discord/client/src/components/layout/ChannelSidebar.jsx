@@ -1,6 +1,7 @@
 import {
   Bell,
-  ChevronDown,
+  Check,
+  Copy,
   Crown,
   FileText,
   Gamepad2,
@@ -18,6 +19,7 @@ import { selectChannel } from "../../features/channelSlice";
 import Avatar from "../ui/Avatar";
 import ChannelCategory from "../channel/ChannelCategory";
 import CreateModal from "../creation/CreateModal";
+import { createInvite } from "../../services/server.service";
 import { useState } from "react";
 
 const iconMap = {
@@ -39,6 +41,20 @@ function ChannelSidebar() {
   const selectedChannelId = selectedChannel?._id || selectedChannel?.id;
   const serverId = selectedServer?._id || selectedServer?.id;
   const [createType, setCreateType] = useState(null);
+  const [inviteCopied, setInviteCopied] = useState(false);
+
+  const copyInviteCode = async () => {
+    if (!serverId) return;
+
+    try {
+      const { inviteCode } = await createInvite(serverId);
+      await navigator.clipboard.writeText(inviteCode);
+      setInviteCopied(true);
+    } catch {
+      setInviteCopied(false);
+    }
+  };
+
   return (
     <aside className="channel-sidebar">
       <header className="server-header">
@@ -46,8 +62,8 @@ function ChannelSidebar() {
           <strong>{selectedServer?.name || "Vynq"}</strong>
           <span>{selectedServer?.description || "Developer Community"}</span>
         </div>
-        <button className="icon-button" title="Server menu">
-          <ChevronDown size={17} />
+        <button className="icon-button" title={inviteCopied ? "Invite code copied" : "Copy invite code"} onClick={copyInviteCode} disabled={!serverId}>
+          {inviteCopied ? <Check size={17} /> : <Copy size={17} />}
         </button>
       </header>
       <div className="channel-scroll">

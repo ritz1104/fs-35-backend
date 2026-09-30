@@ -24,6 +24,16 @@ export const createServerAsync = createAsyncThunk(
     }
   },
 );
+export const joinServerAsync = createAsyncThunk(
+  "servers/join",
+  async (inviteCode, { rejectWithValue }) => {
+    try {
+      return await service.joinServer(inviteCode.trim());
+    } catch (error) {
+      return rejectWithValue(errorMessage(error));
+    }
+  },
+);
 export const fetchServerMembers = createAsyncThunk(
   "servers/members",
   async (serverId, { rejectWithValue }) => {
@@ -76,6 +86,14 @@ const serverSlice = createSlice({
         state.selectedServer = action.payload;
       })
       .addCase(createServerAsync.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      .addCase(joinServerAsync.fulfilled, (state, action) => {
+        state.error = null;
+        state.servers.push(action.payload);
+        state.selectedServer = action.payload;
+      })
+      .addCase(joinServerAsync.rejected, (state, action) => {
         state.error = action.payload;
       })
       .addCase(fetchServerMembers.fulfilled, (state, action) => {

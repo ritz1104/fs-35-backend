@@ -96,7 +96,7 @@ export const createServer = async (req,res,next)=>{
 export const joinServer = async(req,res,next)=>{
     try {
         
-        const {inviteCode} = req.params
+        const inviteCode = req.params.inviteCode.trim()
 
         const server = await serverModel.findOne({inviteCode})
 
