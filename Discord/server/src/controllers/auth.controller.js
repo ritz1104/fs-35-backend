@@ -41,14 +41,14 @@ export const registerUser = async (req,res,next)=>{
     res.cookie("accessToken",accessToken,{
         httpOnly:true,
         maxAge:15*60*1000,
-        secure:false,
+        secure:true,
         sameSite:"strict"
     })
 
     res.cookie("refreshToken",refreshToken,{
         httpOnly:true,
         maxAge:2*24*60*60*1000,
-        secure:false,
+        secure:true,
         sameSite:"strict"
     })
 
@@ -93,14 +93,14 @@ export const loginUser = async (req,res,next)=>{
     res.cookie("accessToken",accessToken,{
         httpOnly:true,
         maxAge:15*60*1000,
-        secure:false,
+        secure:true,
         sameSite:"strict"
     })
 
     res.cookie("refreshToken",refreshToken,{
         httpOnly:true,
         maxAge:2*24*60*60*1000,
-        secure:false,
+        secure:true,
         sameSite:"strict"
     })
 
@@ -257,7 +257,7 @@ export const forgetPassword = async (req,res)=>{
 
  await sendBrevoEmail(
      user.email,
-     
+
     `Reset your password using this otp: ${otp}`,
     `
                 <div style="font-family: Arial, sans-serif;">
@@ -404,7 +404,7 @@ export const refreshToken = async (req, res) => {
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
         maxAge: 15 * 60 * 1000,
-        secure: false,
+        secure: true,
         sameSite: "strict",
     });
 
