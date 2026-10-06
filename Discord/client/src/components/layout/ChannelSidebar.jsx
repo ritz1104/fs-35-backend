@@ -2,7 +2,6 @@ import {
   Bell,
   Check,
   Copy,
-  Crown,
   FileText,
   Gamepad2,
   Headphones,
@@ -20,6 +19,7 @@ import Avatar from "../ui/Avatar";
 import ChannelCategory from "../channel/ChannelCategory";
 import CreateModal from "../creation/CreateModal";
 import { createInvite } from "../../services/server.service";
+import NitroButton from "../payment/NitroButton";
 import { useState } from "react";
 
 const iconMap = {
@@ -111,10 +111,7 @@ function ChannelSidebar() {
         </ChannelCategory>
         <div className="quick-links">
           <span className="category-label">QUICK ACCESS</span>
-          <button className="channel-item">
-            <Crown size={16} />
-            <span>Community picks</span>
-          </button>
+          <NitroButton />
           <button className="channel-item">
             <Gamepad2 size={16} />
             <span>Events & jams</span>

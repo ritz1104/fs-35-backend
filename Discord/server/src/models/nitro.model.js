@@ -4,7 +4,8 @@ import mongoose from "mongoose";
 const nitroSchema = new mongoose.Schema({
     user:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:"users"
+        ref:"users",
+        required:true
     },
     plan:{
         type:String,
@@ -21,14 +22,14 @@ const nitroSchema = new mongoose.Schema({
     },
     status:{
         type:String,
-        enum:["active","expires","cancelled"],
+        enum:["active","expired","cancelled"],
         default:"active"
     },
-    razorPayOrderID:{
+    razorpayOrderId:{
         type:String,
-        unique:true
+        required:true
     },
-    razorPayPaymentId:{
+    razorpayPaymentId:{
         type:String,
         required:true,
         unique:true

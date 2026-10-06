@@ -8,6 +8,7 @@ import sendEmail from "../services/email.service.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import sendResendEmail from "../services/resend.service.js";
 export const registerUser = async (req,res,next)=>{
   try {
       const {username,email,password,dob,fullname,mobile_no}= req.body
@@ -231,9 +232,30 @@ export const forgetPassword = async (req,res)=>{
 
  await redis.set(`reset-password-hashedOtp-${email}`,hashedOtp,"EX",10*60)
 
- await sendEmail(
-    user.email,
-    "Reset Your Discord Password",
+//  await sendEmail(
+//     user.email,
+//     "Reset Your Discord Password",
+//     `Reset your password using this otp: ${otp}`,
+//     `
+//                 <div style="font-family: Arial, sans-serif;">
+//                 <h2>Password Reset Request</h2>
+
+//                 <p>Your OTP for resetting your password is:</p>
+
+//                 <h1 style="letter-spacing: 5px;">
+//                     ${otp}
+//                 </h1>
+
+//                 <p>This OTP will expire in <strong>10 minutes</strong>.</p>
+
+//                 <p>If you did not request a password reset, please ignore this email.</p>
+//             </div>
+
+//     `
+// );
+
+ await sendResendEmail(
+     user.email,
     `Reset your password using this otp: ${otp}`,
     `
                 <div style="font-family: Arial, sans-serif;">
@@ -251,7 +273,7 @@ export const forgetPassword = async (req,res)=>{
             </div>
 
     `
-);
+ )
 
 return res.status(200).json({
     success:true,

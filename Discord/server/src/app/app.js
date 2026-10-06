@@ -16,7 +16,6 @@ import messageRoutes from '../routes/message.routes.js'
 import channelRoutes from '../routes/channel.routes.js'
 import http from 'http'
 import { initializeSocket } from '../socket/socket.js'
-import razorpay from '../config/razorpay.config.js'
 import paymentRoutes from '../routes/payment.routes.js'
 import cors from 'cors'
 const app = express()
@@ -63,7 +62,11 @@ app.use('/api/roles',roleRoutes)
 app.use('/api/user',userRoutes)
 app.use('/api/messages',messageRoutes)
 app.use('/api/channels',messageRoutes)
-app.use('/api/payments',paymentRoutes)
+console.log("🔥 BEFORE PAYMENT ROUTES");
+
+app.use("/api/payments", paymentRoutes);
+
+console.log("🔥 PAYMENT ROUTES MOUNTED");
 
 
 app.use(errorMiddleware)

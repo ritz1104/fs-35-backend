@@ -26,6 +26,20 @@ React component
     -> React component
 ```
 
+The Nitro payment flow uses the same authenticated REST pattern, with Razorpay
+Checkout between order creation and server verification:
+
+```text
+NitroButton
+    -> payment.service.js
+    -> POST /api/payments/create-order
+    -> Razorpay order + local payment record
+    -> Razorpay Checkout
+    -> POST /api/payments/verify
+    -> signature and order validation
+    -> paid payment + Nitro entitlement
+```
+
 The future realtime flow is intentionally prepared but not implemented on the client:
 
 ```text
@@ -161,6 +175,13 @@ Client services unwrap `response.data.data` so Redux receives the useful data di
 ```
 
 The client stores the backend message in Redux error state instead of exposing a raw Axios error object.
+
+### Payment verification
+
+Payment verification is always performed by the server. The browser receives
+Razorpay's callback values, but it cannot decide that a payment succeeded. The
+server checks the private Razorpay secret, the logged-in user, and the original
+order before granting Nitro access.
 
 ## 3. Authentication Implementation
 
@@ -441,7 +462,135 @@ message:deleted  -> dispatch(removeMessage(payload))
 
 That adapter should be added separately. It should not duplicate message persistence through the socket.
 
-## 7. Backend Socket.IO Audit
+## 7. Razorpay Nitro Payment Integration
+
+### Payment files
+
+Client:
+
+- `Discord/client/index.html` loads the Razorpay Checkout script.
+- `Discord/client/src/components/payment/NitroButton.jsx` starts Checkout,
+  handles success/failure, and displays the result.
+- `Discord/client/src/services/payment.service.js` calls the order and
+  verification endpoints.
+
+Server:
+
+- `Discord/server/src/config/razorpay.config.js` creates the Razorpay client.
+- `Discord/server/src/controllers/payment.controller.js` creates orders,
+  verifies payments, and manages Nitro entitlements.
+- `Discord/server/src/routes/payment.routes.js` defines the payment endpoints.
+- `Discord/server/src/models/payment.model.js` stores transactions.
+- `Discord/server/src/models/nitro.model.js` stores premium access duration.
+
+### Nitro plan
+
+| Field | Value |
+|---|---|
+| Product | `nitro` |
+| Price | ₹299 |
+| Razorpay amount | `29900` paise |
+| Currency | `INR` |
+| Duration | 30 days |
+
+Razorpay amounts use the smallest currency unit, so the server must use
+`29900`, not `299`.
+
+### Payment endpoints
+
+All payment endpoints require the authenticated `accessToken` cookie.
+
+| Purpose | Method | URL |
+|---|---:|---|
+| Create Nitro order | `POST` | `/api/payments/create-order` |
+| Verify Checkout response | `POST` | `/api/payments/verify` |
+| Read active Nitro | `GET` | `/api/payments/nitro` |
+
+The create-order response contains only Checkout-safe data:
+
+```json
+{
+  "orderId": "order_...",
+  "amount": 29900,
+  "currency": "INR",
+  "keyId": "rzp_test_..."
+}
+```
+
+The client passes this data to `window.Razorpay`. After Checkout succeeds, it
+sends the callback values without changing them:
+
+```json
+{
+  "razorpay_order_id": "order_...",
+  "razorpay_payment_id": "pay_...",
+  "razorpay_signature": "..."
+}
+```
+
+### Verification steps
+
+The server performs these checks:
+
+1. All three Razorpay callback values are present.
+2. The order exists locally and belongs to the logged-in user.
+3. The signature matches the HMAC-SHA256 value generated from
+   `order_id|payment_id` with `RAZOR_PAY_SECRET_KEY`.
+4. Razorpay reports amount `29900`, currency `INR`, and order status `paid`.
+5. The local payment is marked `paid`.
+6. An active Nitro record is created or extended by 30 days.
+
+The signature comparison is timing-safe. The secret key is loaded only by the
+backend and is never returned to the client. Verification is idempotent:
+retrying an already-paid order returns success without creating another
+payment.
+
+If the user already has active Nitro, the new 30 days start after the current
+`endDate`; otherwise, the period starts at the current time.
+
+### Payment data ownership
+
+```text
+payments
+  financial transaction, order ID, payment ID, amount, currency, status
+
+nitros
+  user entitlement, active period, product, and Razorpay references
+```
+
+The entitlement is created only after the server has completed verification.
+
+### Payment setup and testing
+
+Add Razorpay test credentials to `Discord/server/.env`:
+
+```env
+RAZOR_PAY_API_KEY=rzp_test_xxxxxxxxx
+RAZOR_PAY_SECRET_KEY=xxxxxxxxxxxxxxxx
+```
+
+The API key is safe to send to Checkout. The secret key must remain on the
+server and must not be committed, logged, or added to the client.
+
+To test locally:
+
+1. Start MongoDB and Redis.
+2. Start the backend with `node server.js` from `Discord/server`.
+3. Start the client with `npm run dev` from `Discord/client`.
+4. Log in so the browser has the HTTP-only access-token cookie.
+5. Click **Get Nitro** and complete a Razorpay test payment.
+6. Confirm success appears only after `/api/payments/verify` succeeds.
+7. Confirm `payments.status` is `paid` and `nitros.status` is `active`.
+8. Call `GET /api/payments/nitro` and confirm the returned `endDate`.
+
+If Checkout is dismissed or fails, the button clears its loading state and
+does not grant Nitro. If verification fails, the client shows the backend
+message and the entitlement is not created.
+
+See [`razorpay.md`](./razorpay.md) for full request/response examples,
+signature details, and troubleshooting guidance.
+
+## 8. Backend Socket.IO Audit
 
 The backend implementation is in:
 
@@ -490,7 +639,7 @@ REST POST message
 
 The frontend should later listen for `message:new` and dispatch `addMessage`, but that client code has intentionally not been added yet.
 
-## 8. Backend Route Mounts
+## 9. Backend Route Mounts
 
 The main Express application is `Discord/server/src/app/app.js`.
 
@@ -504,8 +653,9 @@ The main Express application is `Discord/server/src/app/app.js`.
 | `/api/user` | User profile endpoints |
 | `/api/messages` | Legacy message compatibility mount |
 | `/api/channels` | Frontend message endpoints |
+| `/api/payments` | Razorpay order, verification, and Nitro endpoints |
 
-## 9. Error Handling
+## 10. Error Handling
 
 The backend status codes have these meanings:
 
@@ -526,7 +676,19 @@ const error = useSelector((state) => state.messages.error);
 
 Raw server error objects should not be rendered directly.
 
-## 10. How To Run
+### Payment-specific errors
+
+| Status/message | Meaning |
+|---|---|
+| `401` | The user is not logged in or the access token is invalid. |
+| `404 Payment order not found` | The order was not stored or belongs to another user. |
+| `400 Invalid payment signature` | The callback was changed or the Razorpay secret is incorrect. |
+| `400 Payment amount or status could not be verified` | Razorpay does not report the expected paid order. |
+
+The frontend displays these messages and never treats failed verification as a
+successful purchase.
+
+## 11. How To Run
 
 ### Backend
 
@@ -545,6 +707,7 @@ Required runtime dependencies/configuration include:
 - `JWT_SECRET_KEY`.
 - ImageKit settings for uploaded files.
 - Google OAuth settings if Google login is used.
+- Razorpay test keys: `RAZOR_PAY_API_KEY` and `RAZOR_PAY_SECRET_KEY`.
 
 ### Frontend
 
@@ -558,7 +721,7 @@ The Vite development server normally runs on `http://localhost:5173`.
 
 The backend CORS configuration must allow that origin with credentials enabled.
 
-## 11. Files Changed
+## 12. Files Changed
 
 ### Frontend changed files
 
@@ -583,6 +746,9 @@ The backend CORS configuration must allow that origin with credentials enabled.
 - `Discord/client/src/components/layout/ChatArea.jsx`
 - `Discord/client/src/components/chat/ChatHeader.jsx`
 - `Discord/client/src/components/member/MemberSidebar.jsx`
+- `Discord/client/src/components/payment/NitroButton.jsx`
+- `Discord/client/src/services/payment.service.js`
+- `Discord/client/index.html`
 
 ### Backend changed files
 
@@ -600,16 +766,24 @@ The backend CORS configuration must allow that origin with credentials enabled.
 - `Discord/server/src/routes/message.routes.js`
 - `Discord/server/src/routes/serverMember.routes.js`
 - `Discord/server/src/socket/socket.js`
+- `Discord/server/src/config/razorpay.config.js`
+- `Discord/server/src/controllers/payment.controller.js`
+- `Discord/server/src/models/payment.model.js`
+- `Discord/server/src/models/nitro.model.js`
+- `Discord/server/src/routes/payment.routes.js`
+- `Discord/razorpay.md`
 
-## 12. Verification Completed
+## 13. Verification Completed
 
 - Client production build passes with `npm run build` from `Discord/client`.
 - Backend source JavaScript passes `node --check`.
 - Workspace static error check reports no errors.
+- Razorpay verification validates the signature, user ownership, amount,
+  currency, and paid order status before granting Nitro.
 - No `socket.io-client` import exists in frontend source.
 - No frontend socket connection, listener, emitter, or room join exists.
 
-## 13. Remaining Work Before Frontend Socket.IO Integration
+## 14. Remaining Work Before Frontend Socket.IO Integration
 
 1. Confirm MongoDB and Redis are running.
 2. Confirm all backend environment variables are populated.

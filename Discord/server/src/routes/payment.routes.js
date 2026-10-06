@@ -1,10 +1,32 @@
+import express from "express";
 
-import express from "express"
-import { createOrder } from "../controllers/payment.controller.js"
-import { authMiddleware } from "../middlewares/auth.middleware.js"
-const router = express.Router()
+import {
+    createNitroOrder,
+    getMyNitro,
+    verifyNitroPayment,
+} from "../controllers/payment.controller.js";
+
+import { authMiddleware } from "../middlewares/auth.middleware.js";
+
+const router = express.Router();
+
+router.post(
+    "/create-order",
+    authMiddleware,
+    createNitroOrder
+);
+
+router.post(
+    "/verify",
+    authMiddleware,
+    verifyNitroPayment
+);
+
+router.get(
+    "/nitro",
+    authMiddleware,
+    getMyNitro
+);
 
 
-router.post("/create-order",authMiddleware,createOrder)
-
-export default router
+export default router;

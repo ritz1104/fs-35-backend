@@ -35,6 +35,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .channel-item { padding: 10px 12px; border-radius: 10px; color: #a7b2c3; font-size: 12px; }
 .channel-item.selected { color: white; background: linear-gradient(90deg, #8b83f733, #8b83f70c); box-shadow: inset 3px 0 #9c93ff; }
 .channel-item.selected svg { color: #b8afff; }
+.nitro-button { color: #f5d889; }
+.nitro-button:hover { color: #ffe8a8; background: #f5d88914; }
+.nitro-button:disabled { cursor: wait; opacity: .7; }
 .profile-bar { padding: 14px 12px; border-top: 1px solid var(--line); background: #131a24; }
 .profile-summary strong { font-size: 12px; }
 .profile-summary small { font-size: 10px; }

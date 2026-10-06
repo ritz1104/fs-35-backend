@@ -4,11 +4,12 @@ import mongoose from "mongoose";
 const paymentSchema = new mongoose.Schema({
     user:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:"users"
+        ref:"users",
+        required:true
     },
     orderId:{
         type:String,
-        uninque:true,
+        unique:true,
         required:true
     },
     paymentId:{
