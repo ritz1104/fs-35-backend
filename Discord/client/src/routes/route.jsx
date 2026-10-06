@@ -3,7 +3,7 @@ import ChatLayout from '../components/layout/ChatLayout'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
 import ServerWelcome from '../pages/ServerWelcome'
-import PrivateRoutes from './privateRoutes'
+import PrivateRoutes from './PrivateRoutes'
 
 const router = createBrowserRouter([
   { path: '/',
