@@ -1,23 +1,16 @@
-import {Resend} from 'resend'
+import { BrevoClient } from '@getbrevo/brevo';
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
 
-
-const sendResendEmail = async (to, subject, html) => {
-	try {
-		const info = await resend.emails.send({
-			from: 'ritikrajput.com',
-			to,
-			subject,
-			html,
-		});
-
-		console.log('Message sent:', info.messageId);
-	} catch (error) {
-		console.error('Error sending email:', error.message);
-		throw error;
-	}
-};
+const sendBrevoEmail = async (to, subject, html)=>{
+    const result = await brevo.transactionalEmails.sendTransacEmail({
+  subject,
+  htmlContent: html,
+  sender: { name: 'Discord', email: 'ritikrajput2611@gmail.com' },
+  to: [{ email: to }],
+})
+console.log('Email sent. Message ID:', result.messageId);
+}
 
 
-export default sendResendEmail
+export default sendBrevoEmail

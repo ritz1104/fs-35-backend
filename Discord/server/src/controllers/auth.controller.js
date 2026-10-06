@@ -9,6 +9,7 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import sendResendEmail from "../services/resend.service.js";
+import sendBrevoEmail from "../services/resend.service.js";
 export const registerUser = async (req,res,next)=>{
   try {
       const {username,email,password,dob,fullname,mobile_no}= req.body
@@ -254,8 +255,9 @@ export const forgetPassword = async (req,res)=>{
 //     `
 // );
 
- await sendResendEmail(
+ await sendBrevoEmail(
      user.email,
+     
     `Reset your password using this otp: ${otp}`,
     `
                 <div style="font-family: Arial, sans-serif;">
